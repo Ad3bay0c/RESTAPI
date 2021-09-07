@@ -25,7 +25,6 @@ var collection = db.Client.Database("testing").Collection("people")
 
 func CreatePersonEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	var person Person
 	_ = json.NewDecoder(r.Body).Decode(&person)
 
