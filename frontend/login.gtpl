@@ -14,6 +14,7 @@
             <label for="password">Password:</label>
             <input type="password" placeholder="****" name="password"><br>
         </div>
+
         <input type="hidden" name="token" value="{{ . }}">
         <div style="width: 30%">
             <input type="submit" value="SUBMIT" style="background-color: aqua; display: block; float: right">
