@@ -48,7 +48,11 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func ParseToFile(filename string, data interface{}, w http.ResponseWriter) {
-	t, _ := template.ParseFiles(filename)
+	t := template.Must(template.ParseFiles(filename))
 
-	t.Execute(w, data)
+	err := t.Execute(w, data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
 }
