@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ad3bay0c/WebTesting/db2"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
@@ -28,7 +29,7 @@ func GetAllContacts(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
 		return
 	}
-	rows, err := db2.DB.Query("SELECT name, phone FROM contact WHERE user_id = $1", userId)
+	rows, err := db2.DB.Query("SELECT id, name, phone FROM contact WHERE user_id = $1", userId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf(err.Error())
@@ -38,7 +39,7 @@ func GetAllContacts(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var contact Contact
 
-		err := rows.Scan(&contact.Name, &contact.Phone)
+		err := rows.Scan(&contact.ID, &contact.Name, &contact.Phone)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Printf(err.Error())
@@ -113,7 +114,36 @@ func CreateContact(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteContact(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(Message{Message: "Delete Contact Called"})
+	request := mux.Vars(r)
+	contactId := request["id"]
+
+	id := r.Context().Value("userId")
+	uId, ok := id.(float64)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error Converting Id")
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+	userId := int64(uId)
+
+	stmt, err := db2.DB.Prepare("DELETE FROM contact WHERE id = $1 AND user_id = $2")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+
+	res, err := stmt.Exec(contactId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+	affected, _ := res.RowsAffected()
+	json.NewEncoder(w).Encode(Message{Message: fmt.Sprintf("Contact Deleted SUccessfully; Rows Affected : %v", affected)})
 
 }
 
