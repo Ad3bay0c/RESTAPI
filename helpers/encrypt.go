@@ -8,7 +8,7 @@ import (
 func Bcrypt(pass string) (string, error) {
 	newPass, err := bcrypt.GenerateFromPassword([]byte(pass), 14)
 	if err != nil {
-		return "", errors.New("Error Hashing Pass")
+		return "", errors.New("error Hashing Pass")
 	}
 	return string(newPass), nil
 }

@@ -1,6 +1,8 @@
 package helpers
 
-import "github.com/Ad3bay0c/WebTesting/db2"
+import (
+	"github.com/Ad3bay0c/WebTesting/db2"
+)
 
 func CheckUser(username string) bool {
 	var name string
