@@ -18,9 +18,37 @@ type Contact struct {
 }
 
 func GetAllContacts(w http.ResponseWriter, r *http.Request) {
+	var contacts []Contact
 
+	id := r.Context().Value("userId")
+	userId, ok := id.(float64)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error Converting")
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+	rows, err := db2.DB.Query("SELECT name, phone FROM contact WHERE user_id = $1", userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+	for rows.Next() {
+		var contact Contact
+
+		err := rows.Scan(&contact.Name, &contact.Phone)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf(err.Error())
+			json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+			return
+		}
+		contacts = append(contacts, contact)
+	}
 	//id := r.Context().Value("userId")
-	json.NewEncoder(w).Encode(Message{Message: "All Contacts: "})
+	json.NewEncoder(w).Encode(contacts)
 }
 
 func CreateContact(w http.ResponseWriter, r *http.Request) {
