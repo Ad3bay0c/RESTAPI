@@ -148,8 +148,37 @@ func DeleteContact(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateContact(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(Message{Message: "Update Contact Called"})
+	var contact Contact
+	request := mux.Vars(r)
+	contactId := request["id"]
 
+	userId := r.Context().Value("userId")
+
+	err := json.NewDecoder(r.Body).Decode(&contact)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+
+	stmt, err := db2.DB.Prepare("UPDATE contact SET name = $1, phone = $2 WHERE id = $3 AND user_id = $4")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+
+	_, err = stmt.Exec(contact.Name, contact.Phone, contactId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error!!!"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(Message{Message: "Contact Updated Successfully"})
 }
 
 func GetContact(w http.ResponseWriter, r *http.Request) {
