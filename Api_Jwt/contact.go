@@ -182,6 +182,19 @@ func UpdateContact(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetContact(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(Message{Message: "Update Contact Called"})
+	var contact Contact
+	request := mux.Vars(r)
+	contactId := request["id"]
 
+	userId := r.Context().Value("userId")
+
+	row := db2.DB.QueryRow("SELECT id, name, phone FROM contact WHERE id = $1 AND user_id = $2", contactId, userId)
+	err := row.Scan(&contact.ID, &contact.Name, &contact.Phone)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf(err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Empty Contact"})
+		return
+	}
+	json.NewEncoder(w).Encode(contact)
 }
