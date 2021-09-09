@@ -25,11 +25,12 @@ func CreateToken(userId int64) (string, error)  {
 
 func IsAuthorized(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		var response = map[string]interface{}{
 			"message" : "Missing Authorization Token",
 		}
 
-		header := r.Header.Get("Authorization")
+		header := r.Header.Get("Auth-Token")
 		header = strings.TrimSpace(header)
 
 		if header == "" {
