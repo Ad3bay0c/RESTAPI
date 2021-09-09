@@ -15,7 +15,7 @@ type User struct {
 	Username	string		`json:"username,omitempty"`
 	Password	string		`json:"password,omitempty"`
 	CreatedAt	time.Time	`json:"created_at,omitempty"`
-	UpdatedAt	time.Time	`json:"updated_at"`
+	UpdatedAt	time.Time	`json:"updated_at,omitempty"`
 }
 
 type Profile struct {
@@ -117,7 +117,45 @@ func HandleError(err error, w http.ResponseWriter) {
 	}
 }
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	//var username string
+	w.Header().Set("Content-Type", "application/json")
+	var user User
 
-	w.Write([]byte("Login Called"))
+	request, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error: " + err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error"})
+		return
+	}
+	_ = json.Unmarshal(request, &user)
+
+	checkUserExist := func() *User {
+		var user2 User
+		row := db2.DB.QueryRow("SELECT id, username, password FROM users WHERE username = $1", user.Username)
+		_ = row.Scan(&user2.ID, &user2.Username, &user2.Password)
+
+		return &user2
+	}()
+
+	if checkUserExist.Username == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Message{Message: "Username Does Not Exists"})
+		return
+	}
+	if !helpers.VerifyPassword(user.Password, checkUserExist.Password) {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(Message{Message: "Incorrect password"})
+		return
+	}
+
+	token, err := helpers.CreateToken(checkUserExist.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error: " + err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(Message{Token: token, Message: "Logged In Successfully"})
 }
