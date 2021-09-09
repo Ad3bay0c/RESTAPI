@@ -16,7 +16,7 @@ func init () {
 func CreateToken(userId int64) (string, error)  {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"Authorized": true,
-		"expiry": time.Now().Add(time.Minute * 30).Unix(),
+		"expiresAt": time.Now().Add(time.Minute * 30).Unix(),
 		"issuedAt": time.Now().Unix(),
 		"userId": userId,
 	})
@@ -49,6 +49,15 @@ func IsAuthorized(next http.Handler) http.Handler {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
+		expired := claims["expiresAt"].(float64)
+
+		if int64(expired) < time.Now().Unix() {
+			w.WriteHeader(http.StatusForbidden)
+			response["message"] = "Token Expired"
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), "userId", claims["userId"])
 
 		next.ServeHTTP(w, r.WithContext(ctx))
