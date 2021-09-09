@@ -49,6 +49,7 @@ func IsAuthorized(next http.Handler) http.Handler {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
+
 		expired := claims["expiresAt"].(float64)
 
 		if int64(expired) < time.Now().Unix() {
