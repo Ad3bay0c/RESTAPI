@@ -1,10 +1,11 @@
 package Api_Jwt
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 )
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Get User Called")
+	json.NewEncoder(w).Encode(map[string]string{"message":"Called"})
+	//fmt.Fprintf(w, "Get User Called")
 }
