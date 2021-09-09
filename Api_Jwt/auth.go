@@ -24,12 +24,13 @@ type Profile struct {
 	Lastname	string	`json:"lastname,omitempty"`
 }
 type Message struct {
-	 Message string	`json:"message"`
+	 Message string	`json:"message,omitempty"`
+	 Token	string	`json:"token,omitempty"`
 }
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var user = &User{}
-	//var profile = &Profile{}
 
 	res, err := ioutil.ReadAll(r.Body)
 	HandleError(err, w)
@@ -57,6 +58,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(Message{Message: "Password Is Required"})
 		return
 	}
+
+	if helpers.CheckUser(user.Username) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Message{Message: "Username Already exists"})
+		return
+	}
+
 	user.ID = time.Now().Unix()
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
@@ -86,10 +94,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(Message{Message: "Server Error"})
 		return
 	}
-	//_ = db2.DB.QueryRow("INSERT INTO users (id, firstname, lastname) VALUE ($1, $2, $3)", user.ID, user.Username, user.Password)
 
-	query.LastInsertId()
-	json.NewEncoder(w).Encode(user)
+	id, _ := query.LastInsertId()
+
+	token, err := helpers.CreateToken(id)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error: " + err.Error())
+		json.NewEncoder(w).Encode(Message{Message: "Server Error"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(Message{Message: "Registration Successful", Token: token})
 }
 
 func HandleError(err error, w http.ResponseWriter) {
@@ -101,5 +118,6 @@ func HandleError(err error, w http.ResponseWriter) {
 }
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	//var username string
+
 	w.Write([]byte("Login Called"))
 }
