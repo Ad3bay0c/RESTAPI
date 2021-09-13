@@ -41,8 +41,8 @@ func IsAuthorized(next http.Handler) http.Handler {
 		token, err := jwt.Parse(header, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("SECRET_KEY")), nil
 		})
-
 		if err != nil {
+
 			response["message"] = "Invalid Token"
 			json.NewEncoder(w).Encode(response)
 			return
