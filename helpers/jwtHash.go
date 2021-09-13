@@ -62,5 +62,6 @@ func IsAuthorized(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "userId", claims["userId"])
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+
 	})
 }
